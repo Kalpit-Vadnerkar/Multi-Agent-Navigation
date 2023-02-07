@@ -68,14 +68,32 @@ class SFMAgent(AbstractAgent):
         self.kappa = kappa # scaling constant of the sliding friction foce in case of a collision
         self.F = np.zeros(2) # the total force acting on the agent
         self.maxF = maxF # the maximum force that can be applied to the agent
+        self.mass = mass # the mass of the agent
 
 
     def computeAction(self, neighbors=[]):
+        self.F = self.mass * (self.gvel - self.vel) / self.ksi
+        Fij = np.zeros(2)
+        for n in neighbors:
+            dij = np.linalg.norm(self.pos - n.pos) # distance between the agent's centre of mass
+            rij = self.radius + n.radius
+            if dij - rij <= self.dhor and self.id != n.id:
+                nij = (self.pos - n.pos) / dij # normalized vector pointing from agent n to this agent                
+                gx = 0 if dij > rij else rij - dij
+                tij = np.array([-nij[1], nij[0]]) # tangential direction
+                deltavjit = (n.vel - self.vel) * tij # tangential velocity difference
+                Fij += (self.A * np.exp((rij - dij) / self.B) + self.k * gx) * nij + self.kappa * gx * deltavjit * tij
+        self.F += Fij
         """ 
             Your code to compute the forces acting on the agent. 
         """       
         if not self.atGoal:
-            self.F = np.zeros(2)
+            sign = np.sign(self.F)
+            mag = np.abs(self.F)
+            np.where(mag <= self.maxF, mag, self.maxF)
+            self.F = mag * sign
+            
+        
             
 
     def update(self, dt):
