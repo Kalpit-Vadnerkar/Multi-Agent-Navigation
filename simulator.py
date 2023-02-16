@@ -19,7 +19,7 @@ from agent import SFMAgent, TTCAgent, VOAgent
 """
 dt = 0.05 # the simulation time step
 scenarioFile='3_agents.csv'
-method = "SFM" # you can switch between "SFM", "TTC", and "VO" 
+method = "TTC" # you can switch between "SFM", "TTC", and "VO" 
 doExport = False # export the simulation?
 agents = [] # the simulated agents
 trajectories = [] # keep track of the agents' traces

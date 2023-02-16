@@ -137,9 +137,28 @@ class TTCAgent(AbstractAgent):
     def computeAction(self, neighbors=[]):
         """ 
             Your code to compute the forces acting on the agent. 
-        """       
+        """
+        self.F = (self.gvel - self.vel) / self.ksi
+        Fij = np.zeros(2)
+        for n in neighbors:
+            x = self.pos - n.pos
+            v = self.vel - n.vel
+            r = self.radius - n.radius
+            a = v.dot(v)
+            b = x.dot(v)
+            c = x.dot(x) * (r**2)
+            d = b**2 - a*c
+            T = c / (-b + np.sqrt(d))
+            n = (x + v*T)/np.linalg.norm(x + v*T)
+            Fij += np.maximum(self.timehor - T, 0) / T * n
+        self.F += Fij
+            
+            
         if not self.atGoal:
-            self.F = np.zeros(2)
+            sign = np.sign(self.F)
+            mag = np.abs(self.F)
+            np.where(mag <= self.maxF, mag, self.maxF)
+            self.F = mag * sign
             
 
     def update(self, dt):
