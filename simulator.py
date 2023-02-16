@@ -17,7 +17,8 @@ from agent import SFMAgent, TTCAgent, VOAgent
 """
     Initalize parameters to run a simulation
 """
-dt = 0.05 # the simulation time step
+dt = 0.05 # the simulation time step for SFM and TTC
+#dt = 0.1 # the simulation time step for VO
 scenarioFile='3_agents.csv'
 method = "TTC" # you can switch between "SFM", "TTC", and "VO" 
 doExport = False # export the simulation?

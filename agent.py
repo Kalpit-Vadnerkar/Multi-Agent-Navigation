@@ -143,13 +143,16 @@ class TTCAgent(AbstractAgent):
         for n in neighbors:
             x = self.pos - n.pos
             v = self.vel - n.vel
-            r = self.radius - n.radius
+            r = self.radius + n.radius
             a = v.dot(v)
             b = x.dot(v)
-            c = x.dot(x) * (r**2)
-            d = b**2 - a*c
-            T = c / (-b + np.sqrt(d))
-            n = (x + v*T)/np.linalg.norm(x + v*T)
+            if np.linalg.norm(self.pos - n.pos) < r:
+                T = 0
+            elif b < 0:
+                c = x.dot(x) - r**2
+                d = b**2 - a*c
+                T = (-b - np.sqrt(d)) / a
+            n = (x + v*T) / np.linalg.norm(x + v*T)
             Fij += np.maximum(self.timehor - T, 0) / T * n
         self.F += Fij
             
