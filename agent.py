@@ -156,7 +156,6 @@ class TTCAgent(AbstractAgent):
                 if b < 0:
                     c = x.dot(x) - r**2
                     d = b**2 - a*c
-                    #T = (-b - np.sqrt(d)) / a
                     T = c / (-b + np.sqrt(d))
                     if T > 0:
                         n = (x + v*T) / np.linalg.norm(x + v*T)
@@ -243,7 +242,6 @@ class VOAgent(AbstractAgent):
                     if b < 0:
                         c = x.dot(x) - r**2
                         d = b**2 - a*c
-                        #T = (-b - np.sqrt(d)) / a
                         T = c / (-b + np.sqrt(d))
                         if T > 0:
                             tc = np.minimum(T,tc)
