@@ -10,6 +10,8 @@
 
 import numpy as np
 from abc import ABC, abstractmethod
+import math
+import random
 
 """ 
     Abstract class for agents
@@ -140,20 +142,24 @@ class TTCAgent(AbstractAgent):
         """
         self.F = (self.gvel - self.vel) / self.ksi
         Fij = np.zeros(2)
+        if np.linalg.norm(self.pos - self.goal) < 1:
+            return
         for n in neighbors:
-            x = self.pos - n.pos
-            v = self.vel - n.vel
-            r = self.radius + n.radius
-            a = v.dot(v)
-            b = x.dot(v)
-            if np.linalg.norm(self.pos - n.pos) < r:
-                T = 0
-            elif b < 0:
-                c = x.dot(x) - r**2
-                d = b**2 - a*c
-                T = (-b - np.sqrt(d)) / a
-            n = (x + v*T) / np.linalg.norm(x + v*T)
-            Fij += np.maximum(self.timehor - T, 0) / T * n
+            if not n.atGoal and self.id != n.id:
+                x = self.pos - n.pos
+                v = self.vel - n.vel
+                r = self.radius + n.radius
+                a = v.dot(v)
+                b = x.dot(v)
+                if np.linalg.norm(self.pos - n.pos) < r:
+                    T = 0
+                if b < 0:
+                    c = x.dot(x) - r**2
+                    d = b**2 - a*c
+                    T = (-b - np.sqrt(d)) / a
+                    if T > 0:
+                        n = (x + v*T) / np.linalg.norm(x + v*T)
+                        Fij += np.maximum(self.timehor - T, 0) / T * n
         self.F += Fij
             
             
@@ -169,6 +175,8 @@ class TTCAgent(AbstractAgent):
             Code to update the velocity and position of the agents.  
             as well as determine the new goal velocity 
         """
+        if np.linalg.norm(self.pos - self.goal) < 1:
+            return
         if not self.atGoal:
             self.vel += self.F*dt     # update the velocity
             self.pos += self.vel*dt   #update the position
@@ -202,9 +210,47 @@ class VOAgent(AbstractAgent):
         """ 
             Your code to compute the new velocity of the agent. 
             The code should set the vnew of the agent to be one of the sampled admissible one. Please do not directly set here the agent's velocity.   
-        """       
+        """
+        if np.linalg.norm(self.pos - self.goal) < 1:
+            return
+        alpha = 1
+        beta = 1
+        gamma = 2
+        cost = math.inf
+        vcand = np.zeros(2)
+        vbest = np.zeros(2)
+        for i in range(1000):
+            # Generate random polar coordinates
+            pr = math.sqrt(random.uniform(0, 1)) * self.maxspeed
+            theta = random.uniform(0, 2 * math.pi)
+        
+            # Convert to Cartesian coordinates
+            vcand[0] = pr * math.cos(theta)
+            vcand[1] = pr * math.sin(theta)
+            for n in neighbors:
+                dij = np.linalg.norm(self.pos - n.pos) # distance between the agent's centre of mass
+                rij = self.radius + n.radius
+                tc = math.inf
+                if dij - rij <= self.dhor and self.id != n.id and np.linalg.norm(n.pos - n.goal) > 1:
+                    x = self.pos - n.pos
+                    v = vcand - n.vel
+                    r = self.radius + n.radius
+                    a = v.dot(v)
+                    b = x.dot(v)
+                    if np.linalg.norm(self.pos - n.pos) < r:
+                        T = 0
+                    if b < 0:
+                        c = x.dot(x) - r**2
+                        d = b**2 - a*c
+                        T = (-b - np.sqrt(d)) / a
+                        if T > 0:
+                            tc = np.minimum(T,tc)
+            candcost = alpha * np.linalg.norm(vcand - self.gvel) + beta * np.linalg.norm(vcand - self.vel) + gamma/tc
+            if candcost < cost:
+                cost = candcost
+                vbest[:] = vcand[:] 
         if not self.atGoal:
-            self.vnew[:] = self.gvel[:]   # here I just set the new velocity to be the goal velocity   
+            self.vnew[:] = vbest[:]   # here I just set the new velocity to be the goal velocity   
 
 
     def update(self, dt):
@@ -212,6 +258,8 @@ class VOAgent(AbstractAgent):
             Code to update the velocity and position of the agent  
             as well as determine the new goal velocity 
         """
+        if np.linalg.norm(self.pos - self.goal) < 1:
+            return
         if not self.atGoal:
             self.vel[:] = self.vnew[:]
             self.pos += self.vel*dt   #update the position
