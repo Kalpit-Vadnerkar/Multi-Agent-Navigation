@@ -149,14 +149,15 @@ class TTCAgent(AbstractAgent):
                 x = self.pos - n.pos
                 v = self.vel - n.vel
                 r = self.radius + n.radius
-                a = v.dot(v)
-                b = x.dot(v)
+                a = v.dot(v) - self.epsilon ** 2
+                b = x.dot(v) - (self.epsilon * r)
                 if np.linalg.norm(self.pos - n.pos) < r:
                     T = 0
                 if b < 0:
                     c = x.dot(x) - r**2
                     d = b**2 - a*c
-                    T = (-b - np.sqrt(d)) / a
+                    #T = (-b - np.sqrt(d)) / a
+                    T = c / (-b + np.sqrt(d))
                     if T > 0:
                         n = (x + v*T) / np.linalg.norm(x + v*T)
                         Fij += np.maximum(self.timehor - T, 0) / T * n
@@ -219,7 +220,7 @@ class VOAgent(AbstractAgent):
         cost = math.inf
         vcand = np.zeros(2)
         vbest = np.zeros(2)
-        for i in range(1000):
+        for i in range(100):
             # Generate random polar coordinates
             pr = math.sqrt(random.uniform(0, 1)) * self.maxspeed
             theta = random.uniform(0, 2 * math.pi)
@@ -227,22 +228,23 @@ class VOAgent(AbstractAgent):
             # Convert to Cartesian coordinates
             vcand[0] = pr * math.cos(theta)
             vcand[1] = pr * math.sin(theta)
+            tc = math.inf
             for n in neighbors:
                 dij = np.linalg.norm(self.pos - n.pos) # distance between the agent's centre of mass
                 rij = self.radius + n.radius
-                tc = math.inf
                 if dij - rij <= self.dhor and self.id != n.id and np.linalg.norm(n.pos - n.goal) > 1:
                     x = self.pos - n.pos
                     v = vcand - n.vel
                     r = self.radius + n.radius
-                    a = v.dot(v)
-                    b = x.dot(v)
+                    a = v.dot(v) - self.epsilon ** 2
+                    b = x.dot(v) - (self.epsilon * r)
                     if np.linalg.norm(self.pos - n.pos) < r:
                         T = 0
                     if b < 0:
                         c = x.dot(x) - r**2
                         d = b**2 - a*c
-                        T = (-b - np.sqrt(d)) / a
+                        #T = (-b - np.sqrt(d)) / a
+                        T = c / (-b + np.sqrt(d))
                         if T > 0:
                             tc = np.minimum(T,tc)
             candcost = alpha * np.linalg.norm(vcand - self.gvel) + beta * np.linalg.norm(vcand - self.vel) + gamma/tc
